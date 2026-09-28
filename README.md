@@ -1,29 +1,10 @@
-# DON'T TRY Bot — Render Ready
+# DON'T TRY Bot — Cloudflare Workers
 
-Telegram bot starter for the DON'T TRY channel.
+Environment variables:
+- BOT_TOKEN — BotFather token (Secret)
+- WEBHOOK_SECRET — long random secret (Secret)
+- CHANNEL_USERNAME — @i_dont_try
 
-## Render settings
-
-Build Command:
-npm install && npm run build
-
-Start Command:
-npm start
-
-Environment Variables:
-- BOT_TOKEN = token from @BotFather
-- WEBHOOK_SECRET = long random secret
-- CHANNEL_USERNAME = @i_dont_try
-
-After deployment, open:
-
-https://YOUR-RENDER-DOMAIN/setup
-
-Then test the bot:
-- /start
-- /test
-- /publish
-
-The bot must already be an administrator of the channel with permission to post messages.
-
-Never commit BOT_TOKEN to GitHub or put it in source code.
+After deployment open /setup once, then test /start, /test and /publish.
+The bot must be an administrator of @i_dont_try with permission to post.
+Never put BOT_TOKEN in GitHub source files.

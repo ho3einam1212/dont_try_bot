@@ -1,18 +1,1 @@
-{
-  "name": "dont-try-bot",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "start": "node dist/server.js",
-    "build": "tsc"
-  },
-  "dependencies": {
-    "express": "^5.1.0"
-  },
-  "devDependencies": {
-    "@types/express": "^5.0.3",
-    "@types/node": "^24.3.0",
-    "typescript": "^5.9.2"
-  }
-}
+{"name":"dont-try-bot","version":"1.0.0","private":true,"type":"module","scripts":{"build":"tsc","deploy":"wrangler deploy","dev":"wrangler dev"},"devDependencies":{"@cloudflare/workers-types":"^4.20250906.0","typescript":"^5.9.2","wrangler":"^4.34.0"}}
