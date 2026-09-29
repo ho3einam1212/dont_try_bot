@@ -36,27 +36,38 @@ async function telegram(
 async function sendMessage(
   env: Env,
   chatId: string | number,
-  text: string
+  text: string,
+  replyMarkup?: unknown
 ) {
   return telegram(env, "sendMessage", {
     chat_id: chatId,
     text,
     parse_mode: "HTML",
+    ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
   });
 }
+
+const mainMenu = {
+  inline_keyboard: [
+    [
+      { text: "🧠 پست جدید", callback_data: "new_post" },
+      { text: "📢 انتشار", callback_data: "publish" },
+    ],
+    [
+      { text: "🧪 تست ربات", callback_data: "test" },
+      { text: "ℹ️ درباره DON'T TRY", callback_data: "about" },
+    ],
+  ],
+};
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
-    // صفحه اصلی
     if (request.method === "GET" && url.pathname === "/") {
-      return new Response("DON'T TRY Bot is running 🖤", {
-        status: 200,
-      });
+      return new Response("DON'T TRY Bot is running 🖤");
     }
 
-    // تست سلامت
     if (request.method === "GET" && url.pathname === "/health") {
       return Response.json({
         ok: true,
@@ -64,7 +75,6 @@ export default {
       });
     }
 
-    // تنظیم Webhook
     if (request.method === "GET" && url.pathname === "/setup") {
       try {
         const webhookUrl = `${url.origin}/webhook`;
@@ -72,7 +82,7 @@ export default {
         const result = await telegram(env, "setWebhook", {
           url: webhookUrl,
           secret_token: env.WEBHOOK_SECRET,
-          allowed_updates: ["message"],
+          allowed_updates: ["message", "callback_query"],
           drop_pending_updates: true,
         });
 
@@ -92,7 +102,6 @@ export default {
       }
     }
 
-    // اطلاعات Webhook
     if (request.method === "GET" && url.pathname === "/webhook-info") {
       try {
         const result = await telegram(env, "getWebhookInfo");
@@ -112,7 +121,6 @@ export default {
       }
     }
 
-    // Webhook تلگرام
     if (request.method === "POST" && url.pathname === "/webhook") {
       try {
         const suppliedSecret = request.headers.get(
@@ -127,77 +135,45 @@ export default {
         }
 
         const update = (await request.json()) as any;
-        const message = update?.message;
 
-        if (!message?.text || !message?.chat?.id) {
-          return Response.json({ ok: true });
-        }
+        // دکمه‌های منو
+        const callbackQuery = update?.callback_query;
 
-        const chatId = message.chat.id;
-        const text = String(message.text).trim();
+        if (callbackQuery) {
+          const callbackId = callbackQuery.id;
+          const chatId = callbackQuery.message?.chat?.id;
+          const data = callbackQuery.data;
 
-        if (text === "/start") {
-          await sendMessage(
-            env,
-            chatId,
-            `🖤 <b>DON'T TRY</b>\n\n` +
-              `به اتاق کنترل DON'T TRY خوش اومدی.\n\n` +
-              `<b>دستورها:</b>\n` +
-              `/test — تست اتصال ربات\n` +
-              `/publish — انتشار پست آزمایشی`
-          );
-        }
+          await telegram(env, "answerCallbackQuery", {
+            callback_query_id: callbackId,
+          });
 
-        else if (text === "/test") {
-          await sendMessage(
-            env,
-            chatId,
-            "✅ ربات فعاله.\n\nDON'T TRY آماده‌ست."
-          );
-        }
+          if (!chatId) {
+            return Response.json({ ok: true });
+          }
 
-        else if (text === "/publish") {
-          await sendMessage(
-            env,
-            env.CHANNEL_USERNAME,
-            `🧠 <b>DON'T TRY — 001</b>\n\n` +
-              `گاهی دلت برای یک آدم تنگ نشده؛\n` +
-              `برای احساسی تنگ شده که وقتی کنارش بودی داشتی.\n\n` +
-              `<i>بعضی حقیقت‌ها راحت نیستند.</i>\n\n` +
-              `#DONTTry #Psychology`
-          );
+          if (data === "test") {
+            await sendMessage(
+              env,
+              chatId,
+              "✅ <b>ربات سالم و فعاله.</b>\n\nاتصال DON'T TRY به تلگرام برقرار است.",
+              mainMenu
+            );
+          }
 
-          await sendMessage(
-            env,
-            chatId,
-            "🔥 پست آزمایشی با موفقیت در کانال منتشر شد."
-          );
-        }
+          else if (data === "about") {
+            await sendMessage(
+              env,
+              chatId,
+              `🖤 <b>DON'T TRY</b>\n\n` +
+              `یک اتاق کنترل برای مدیریت محتوای کانال.\n\n` +
+              `اینجا قراره انتشار محتوا، تست ربات و امکانات بعدی رو مدیریت کنیم.`,
+              mainMenu
+            );
+          }
 
-        else {
-          await sendMessage(
-            env,
-            chatId,
-            "دستور شناخته نشد.\n\n/start را بزن."
-          );
-        }
-
-        return Response.json({ ok: true });
-      } catch (error) {
-        console.error("Webhook error:", error);
-
-        return Response.json(
-          {
-            ok: false,
-            error: String(error),
-          },
-          { status: 500 }
-        );
-      }
-    }
-
-    return new Response("Not Found", {
-      status: 404,
-    });
-  },
-};
+          else if (data === "new_post") {
+            await sendMessage(
+              env,
+              chatId,
+              `🧠 <b>پست جدید</b>\n
