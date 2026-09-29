@@ -1,0 +1,5 @@
+{
+  "name": "dont-try-bot",
+  "main": "server.ts",
+  "compatibility_date": "2026-09-29"
+}
